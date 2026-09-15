@@ -30,11 +30,21 @@ alone; it takes outside knowledge of who owns what. Separately, `www.korea.ac.kr
 no CNAME at all, so a domain-based rule is blind by construction to any anycast CDN
 that might sit behind a bare A record.
 
-Steering number: **7 of 8** CDN-hosted sites returned a different address set to a
-different resolver (system / 8.8.8.8 / 9.9.9.9), measured from one network only —
-this run was made from inside the lab container, so it is a single vantage point.
-The second-network comparison (campus Wi-Fi vs. phone tethering) still needs to be
-done to satisfy B3 — see the note in `out/report.md`.
+Steering number (resolver, one network): **7 of 8** CDN-hosted sites returned a
+different address set to a different resolver (system / 8.8.8.8 / 9.9.9.9).
+
+Steering number (network, B3): **3 of 8** CDN-hosted sites returned a different
+address set after switching from lab/home Wi-Fi to phone tethering — and all
+three (`microsoft.com`, `adobe.com`, `apple.com`) were Akamai. The other five
+CDN-hosted sites, all on Fastly or Netlify, gave byte-identical answers on both
+networks. This supports claim (b) but only for part of the CDN market: Akamai's
+DNS answer itself encodes the steering decision (different unicast IP per
+egress network), while Fastly/Netlify steer at the routing layer instead —
+one anycast IP is announced everywhere and BGP picks the nearby path, so the
+DNS layer has nothing to change between networks. Someone testing only Fastly
+sites would have concluded DNS doesn't steer at all; someone testing only
+Akamai sites would have concluded it always does. Both are true depending on
+vendor.
 
 Part A capture: a delegation and an answer are the exact same DNS message format —
 the difference is only which sections are non-empty. The root server's response to

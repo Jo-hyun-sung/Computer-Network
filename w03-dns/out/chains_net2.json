@@ -8,20 +8,20 @@
     "final": "e13678.dscb.akamaiedge.net",
     "addresses": {
       "system": [
-        "23.49.206.40",
-        "23.49.206.40",
-        "23.49.206.40",
+        "104.94.218.45",
+        "104.94.218.45",
+        "104.94.218.45",
         "e13678.dscb.akamaiedge.net.",
         "e13678.dscb.akamaiedge.net.",
         "www.microsoft.com-c-3.edgekey.net."
       ],
       "google": [
-        "23.49.206.40",
+        "104.94.218.45",
         "e13678.dscb.akamaiedge.net.",
         "www.microsoft.com-c-3.edgekey.net."
       ],
       "quad9": [
-        "23.63.226.92",
+        "23.0.194.92",
         "e13678.dscb.akamaiedge.net.",
         "www.microsoft.com-c-3.edgekey.net."
       ]
@@ -62,22 +62,22 @@
     "final": "a1319.dscr.akamai.net",
     "addresses": {
       "system": [
-        "23.76.153.115",
-        "23.76.153.115",
-        "23.76.153.115",
-        "23.76.153.115",
-        "23.76.153.121",
-        "23.76.153.121",
-        "23.76.153.121",
-        "23.76.153.121",
+        "23.67.53.168",
+        "23.67.53.168",
+        "23.67.53.168",
+        "23.67.53.168",
+        "23.67.53.219",
+        "23.67.53.219",
+        "23.67.53.219",
+        "23.67.53.219",
         "a1319.dscr.akamai.net.",
         "a1319.dscr.akamai.net.",
         "a1319.dscr.akamai.net.",
         "www.adobe.com.edgesuite.net."
       ],
       "google": [
-        "23.76.153.115",
-        "23.76.153.121",
+        "23.35.218.227",
+        "23.35.218.232",
         "a1319.dscr.akamai.net.",
         "www.adobe.com.edgesuite.net."
       ],
@@ -127,16 +127,21 @@
     "final": "e6858.dsce9.akamaiedge.net",
     "addresses": {
       "system": [
-        "23.49.205.28",
-        "23.49.205.28",
-        "23.49.205.28",
-        "23.49.205.28",
-        "23.49.205.28",
+        "104.94.216.37",
+        "104.94.216.37",
+        "104.94.216.37",
+        "104.94.216.37",
+        "104.94.216.37",
+        "104.94.216.37",
+        "104.94.216.37",
+        "e6858.dsce9.akamaiedge.net.",
+        "e6858.dsce9.akamaiedge.net.",
         "e6858.dsce9.akamaiedge.net.",
         "e6858.dsce9.akamaiedge.net.",
         "e6858.dsce9.akamaiedge.net.",
         "e6858.dsce9.akamaiedge.net.",
         "www-apple-com.v.aaplimg.com.",
+        "www.apple.com.edgekey.net.",
         "www.apple.com.edgekey.net.",
         "www.apple.com.edgekey.net."
       ],
@@ -147,7 +152,7 @@
         "www.apple.com.edgekey.net."
       ],
       "quad9": [
-        "184.31.228.249",
+        "23.0.193.49",
         "e6858.dsce9.akamaiedge.net.",
         "www-apple-com.v.aaplimg.com.",
         "www.apple.com.edgekey.net."
@@ -181,8 +186,6 @@
       "system": [
         "15.197.167.90",
         "15.197.167.90",
-        "15.197.167.90",
-        "3.33.186.135",
         "3.33.186.135",
         "3.33.186.135",
         "stanford.netlifyglobalcdn.com."
@@ -211,11 +214,6 @@
         "146.75.48.81",
         "146.75.48.81",
         "146.75.48.81",
-        "146.75.48.81",
-        "146.75.48.81",
-        "146.75.48.81",
-        "146.75.48.81",
-        "bbc.map.fastly.net.",
         "bbc.map.fastly.net.",
         "bbc.map.fastly.net.",
         "www.bbc.co.uk.pri.bbc.co.uk."
@@ -324,15 +322,10 @@
         "146.75.49.164",
         "146.75.49.164",
         "146.75.49.164",
-        "146.75.49.164",
-        "146.75.49.164",
-        "nytimes.map.fastly.net.",
-        "nytimes.map.fastly.net.",
         "nytimes.map.fastly.net.",
         "nytimes.map.fastly.net.",
         "nytimes.map.fastly.net.",
         "www.prd.map.nytimes.com.",
-        "www.prd.map.nytimes.xovr.nyt.net.",
         "www.prd.map.nytimes.xovr.nyt.net.",
         "www.prd.map.nytimes.xovr.nyt.net."
       ],

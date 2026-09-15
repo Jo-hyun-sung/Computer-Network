@@ -24,7 +24,10 @@ only) to drop unrelated background-app lookups per the privacy note.
   records (18 RRs total) is what inflates it past the plain `www.korea.ac.kr`
   delegations (383 bytes, 6 NS + 10 glue).
 
-Vantage point: single network (see observation.md for the second one).
+Vantage points: **two networks** — network 1 (lab/home Wi-Fi, the network used
+for the table below) and network 2 (phone tethering, public IP
+`118.235.26.167`, a different mobile-carrier egress). Raw per-network data:
+`out/chains_net1.json`, `out/chains_net2.json`.
 
 | site | chain length | final zone | third party? | rule's verdict |
 |---|---|---|---|---|
@@ -41,7 +44,29 @@ Vantage point: single network (see observation.md for the second one).
 | www.wikipedia.org | 2 | wikimedia.org | no | yes |
 | www.nytimes.com | 4 | fastly.net | yes | yes |
 
-**Steering number**: 7 of 8 CDN-hosted sites answered with a different address set to a different resolver (resolvers compared: system, google, quad9).
+**Steering number (by resolver, network 1)**: 7 of 8 CDN-hosted sites answered
+with a different address set to a different resolver (resolvers compared:
+system, google, quad9).
+
+**Steering number (by network, B3)**: **3 of 8** CDN-hosted sites answered
+with a different address set after switching network (lab/home Wi-Fi → phone
+tethering): `www.microsoft.com`, `www.adobe.com`, `www.apple.com` — all three
+Akamai-hosted. The other 5 CDN-hosted sites (`www.cnn.com`, `www.stanford.edu`,
+`www.bbc.co.uk`, `www.spotify.com`, `www.nytimes.com` — Fastly and Netlify)
+returned the **identical** address set on both networks.
+
+This is the more direct test of claim (b) — "DNS steers each user to a nearby
+replica" is a claim about *location*, and only changing the network actually
+moves the vantage point. The resolver-based number above changes what
+*resolver* is asked, not where the client is, so it partly conflates "does the
+resolver's own location get used" with "does switching resolvers happen to hit
+a different edge server by chance." The network-based result splits the CDN
+vendors cleanly: Akamai's steering is unicast/geo-DNS based and responded to
+the client's new egress IP, while Fastly and Netlify's edge nodes are reached
+by **anycast** — same IP announced from many locations, so the DNS answer
+itself does not need to change for routing to still land on a nearby node.
+`www.netflix.com` and `www.github.com` (not third-party) and
+`www.wikipedia.org`/`www.korea.ac.kr` were unaffected either way.
 
 **Rule used**: a site is third-party if the CNAME chain ends in a different registrable domain from the site's own AND that final domain is not recognizably the same organization (own-org check: not a known commercial CDN vendor, and shares a name fragment with the site).
 
