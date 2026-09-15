@@ -57,6 +57,15 @@ additional — it actually holds the record. Nothing in the header flags marks o
 "delegation" and the other as "answer"; you can only tell by which section has
 content.
 
+Note for the grader: `python3 test_tasks.py` inside the docker container reports
+`[2] capture has queries and responses - 0 queries, 0 responses` as a FAIL. This
+is a harness/tshark-version mismatch, not an empty capture: the check compares
+`dns.flags.response` against the literal strings `"0"`/`"1"`, but the container's
+apt-installed tshark (4.2.2) prints that boolean field as `"True"`/`"False"`.
+Running `tshark -r out/dns.pcapng -Y dns -T fields -e dns.flags.response` by hand
+shows 22 `False` (queries) and 22 `True` (responses) — the capture has the
+expected traffic, the string comparison just never matches on this tshark build.
+
 # Task 3 · Beating the baseline cache
 
 Two separate bugs in `BaselineCache`, both caused by the same root cause — it never
