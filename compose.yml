@@ -1,0 +1,38 @@
+services:
+  # 매주 쓰는 기본 환경
+  lab:
+    build: .
+    volumes:
+      - .:/lab
+    working_dir: /lab
+    stdin_open: true
+    tty: true
+
+  # 6주차 전용 - OSPF 라우터 3대
+  # docker compose --profile routing up -d
+  r1:
+    profiles: ["routing"]
+    image: frrouting/frr:v9.1.0
+    privileged: true
+    volumes:
+      - ./w06-routing/topology/r1:/etc/frr
+    networks: [net_a, net_b]
+  r2:
+    profiles: ["routing"]
+    image: frrouting/frr:v9.1.0
+    privileged: true
+    volumes:
+      - ./w06-routing/topology/r2:/etc/frr
+    networks: [net_b, net_c]
+  r3:
+    profiles: ["routing"]
+    image: frrouting/frr:v9.1.0
+    privileged: true
+    volumes:
+      - ./w06-routing/topology/r3:/etc/frr
+    networks: [net_c, net_a]
+
+networks:
+  net_a:
+  net_b:
+  net_c:
