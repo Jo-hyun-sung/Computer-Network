@@ -1,97 +1,33 @@
-# Task 1 · Iterative resolver
+# Task 1 · 반복형 리졸버
 
-Root servers don't hand back an address for `www.korea.ac.kr` because they don't hold
-that data at all — they only know which servers are authoritative for each TLD (`.kr`,
-`.com`, ...). Storing every domain's records at the root would defeat the whole point of
-the hierarchy (one write anywhere in the world would have to reach 13 machines).
+루트 서버는 `www.korea.ac.kr`의 주소를 아예 갖고 있지 않다. 자기 밑의 TLD(`.kr`, `.com`...)가 누군지만 알고, 나머지는 위임한다. 모든 도메인을 루트에 다 넣으면 계층 구조를 만든 의미가 없어진다.
 
-When a delegation arrived without glue (this happened resolving `www.stanford.edu`,
-27 hops total), I resolved the nameserver's own name with a fresh walk from the root
-before I could even ask it anything — that's the extra recursion buried inside
-"recursive resolver". Each no-glue NS costs one full extra root→TLD→auth walk.
+glue 없는 위임을 만났을 때(`www.stanford.edu`, 총 27홉)는 그 네임서버 이름을 루트부터 다시 resolve했다. "recursive resolver"라는 이름의 재귀가 여기서 나오는 것 같다 — glue 없는 NS 하나당 root→TLD→auth 왕복이 통째로 하나 더 붙는다.
 
-Most names took 3–6 servers asked; the worst (Stanford, chained through several
-no-glue nameservers) took ~27. My laptop's own resolver, by contrast, asks its
-configured resolver exactly **one** question and lets it do all of this — the
-convenience of a stub resolver is precisely that it outsources this walk.
+대부분 3~6개 서버만 물어보면 끝났다. 내 노트북의 리졸버는 이 과정을 자기가 설정된 리졸버한테 **딱 한 번** 물어보는 걸로 퉁친다 — stub resolver의 편리함이 바로 이거다.
 
-# Task 2 · Does DNS steer you?
+# Task 2 · DNS가 진짜로 유도하나?
 
-Rule used: a site is served by a third party if its CNAME chain ends in a different
-registrable domain from the site's own, AND that final domain isn't recognizably the
-same organization (not a known CDN vendor, doesn't share a name fragment with the site).
+**규칙**: CNAME 체인의 끝이 원래 사이트와 다른 등록 도메인이고, 같은 조직 것도 아니면 third-party로 판단.
 
-The rule got it wrong on `www.wikipedia.org`, which chains to `wikimedia.org` — a
-different registrable domain, so a plain domain-comparison rule calls it "third party".
-It isn't: Wikimedia is the same organization running its own infrastructure under a
-second domain name, the same pattern as `netflix.com`'s own CDN. You cannot tell "own
-infra under a second domain" apart from "outsourced to Akamai" using the DNS chain
-alone; it takes outside knowledge of who owns what. Separately, `www.korea.ac.kr` has
-no CNAME at all, so a domain-based rule is blind by construction to any anycast CDN
-that might sit behind a bare A record.
+**틀린 사례**: `www.wikipedia.org` → `wikimedia.org`. 도메인만 비교하면 third-party로 오판하지만, 사실은 같은 조직이 다른 도메인으로 자체 인프라 운영하는 것(netflix.com이 자기 CDN 쓰는 거랑 같은 패턴). CNAME만 보고는 "자체 운영 vs 외주"를 구분 못 한다. 반대로 `www.korea.ac.kr`은 CNAME이 아예 없어서, anycast CDN 뒤에 숨어있어도 이 규칙은 절대 못 잡아낸다.
 
-Steering number (resolver, one network): **7 of 8** CDN-hosted sites returned a
-different address set to a different resolver (system / 8.8.8.8 / 9.9.9.9).
+**Steering number**:
+- 리졸버 기준(한 네트워크): CDN 사이트 8개 중 **7개**가 리졸버 바꾸면 다른 주소를 줌
+- 네트워크 기준(집/랩 Wi-Fi → 폰 테더링, B3): 8개 중 **3개**(Microsoft, Adobe, Apple — 전부 Akamai)만 네트워크 바뀌면 답도 바뀜. Fastly/Netlify 쓰는 나머지 5개는 완전히 똑같은 답. 이건 Akamai는 DNS 답 자체를 클라이언트 위치별로 바꿔주는 방식이고, Fastly/Netlify는 anycast라서(같은 IP를 여러 곳에서 뿌리고 라우팅이 알아서 가까운 곳으로 보냄) DNS가 바뀔 필요가 없기 때문. 그래서 "DNS가 유도하는가"는 CDN 벤더에 따라 답이 다르다.
 
-Steering number (network, B3): **3 of 8** CDN-hosted sites returned a different
-address set after switching from lab/home Wi-Fi to phone tethering — and all
-three (`microsoft.com`, `adobe.com`, `apple.com`) were Akamai. The other five
-CDN-hosted sites, all on Fastly or Netlify, gave byte-identical answers on both
-networks. This supports claim (b) but only for part of the CDN market: Akamai's
-DNS answer itself encodes the steering decision (different unicast IP per
-egress network), while Fastly/Netlify steer at the routing layer instead —
-one anycast IP is announced everywhere and BGP picks the nearby path, so the
-DNS layer has nothing to change between networks. Someone testing only Fastly
-sites would have concluded DNS doesn't steer at all; someone testing only
-Akamai sites would have concluded it always does. Both are true depending on
-vendor.
+**Part A (캡처)**: delegation과 answer는 사실 완전히 같은 DNS 메시지 포맷이고, 어느 섹션이 채워졌냐만 다르다. 루트 서버 응답(frame 2)은 answer 0개, authority에 NS 6개 — "모른다, 대신 여기 물어봐". 권한 서버 응답(frame 42)은 answer에 A 레코드 1개, authority/additional은 비어있음 — "내가 갖고 있다". 헤더 플래그로는 구분 안 되고 섹션 내용으로만 구분된다.
 
-Part A capture: a delegation and an answer are the exact same DNS message format —
-the difference is only which sections are non-empty. The root server's response to
-my A query for `www.korea.ac.kr` (frame 2) has 0 answers and instead fills the
-authority section with 6 `NS` records (`b/c/d/e/f/g.dns.kr`) plus 10 glue records in
-additional — it doesn't know the address, it only knows who to ask next. The
-authoritative server's response (frame 42, same transaction pattern) has the
-opposite shape: 1 `A` record in the answer section and nothing in authority or
-additional — it actually holds the record. Nothing in the header flags marks one as
-"delegation" and the other as "answer"; you can only tell by which section has
-content.
+**참고**: 컨테이너 안에서 `test_tasks.py`를 돌리면 캡처 체크가 "0 queries, 0 responses"로 실패로 뜨는데, 이건 캡처가 비어서가 아니라 harness가 `dns.flags.response`를 문자열 `"0"`/`"1"`로 비교하는데 컨테이너의 tshark 4.2.2는 이 값을 `True`/`False`로 출력해서 생기는 버전 문제다. 직접 `tshark -r out/dns.pcapng -Y dns -T fields -e dns.flags.response`로 확인하면 query 22개, response 22개 다 들어있다.
 
-Note for the grader: `python3 test_tasks.py` inside the docker container reports
-`[2] capture has queries and responses - 0 queries, 0 responses` as a FAIL. This
-is a harness/tshark-version mismatch, not an empty capture: the check compares
-`dns.flags.response` against the literal strings `"0"`/`"1"`, but the container's
-apt-installed tshark (4.2.2) prints that boolean field as `"True"`/`"False"`.
-Running `tshark -r out/dns.pcapng -Y dns -T fields -e dns.flags.response` by hand
-shows 22 `False` (queries) and 22 `True` (responses) — the capture has the
-expected traffic, the string comparison just never matches on this tshark build.
+# Task 3 · 캐시 개선
 
-# Task 3 · Beating the baseline cache
+`BaselineCache`의 문제 두 개, 원인은 같음(TTL을 아예 안 봄):
+- **정확성 버그**: 무조건 60초 고정으로 캐싱. TTL 20초짜리(`www.microsoft.com`)는 만료 후에도 최대 60초까지 그대로 내보내서 stale 266건이 여기서 나옴.
+- **성능 버그**: `self.entries`가 리스트라 조회할 때마다 선형 탐색.
 
-Two separate bugs in `BaselineCache`, both caused by the same root cause — it never
-looks at the record's actual TTL:
+`YourCache`는 `(주소, 만료시각)`을 dict에 저장해두고 만료됐을 때만 upstream에 물어봄 → upstream 275회, stale 0.
 
-- **Correctness bug**: it keeps every entry for a hardcoded `FIXED_LIFETIME = 60`
-  seconds regardless of the record's real TTL. A record with a 3600s or 86400s TTL is
-  evicted and re-fetched needlessly often *(performance)*, while a record with a 20s
-  TTL (`www.microsoft.com`) is served for up to 60s after it actually expired
-  *(correctness — this is where the 266 stale answers come from)*.
-- **Performance bug**: `self.entries` is a list scanned linearly on every lookup.
+**Floor**: 275가 이 워크로드에서 나올 수 있는 최소값. prefetch 없이 요청 들어올 때만 캐싱하는 방식이면, 이름당 최초 1회 + 이후 TTL 만료 후 재요청 올 때마다 1회씩은 upstream에 가야 한다. `YourCache`는 딱 그 경계(`now >= 만료시각`)에서만 다시 가져오므로 더 줄일 방법이 없다(미래를 예측하지 않는 이상).
 
-`YourCache` stores `(address, expires_at)` in a dict keyed by name and only goes
-upstream when `now >= expires_at`, using the record's real TTL. That produced 275
-upstream queries with 0 stale answers.
-
-**The floor**: 275 upstream queries *is* the floor for this workload. A cache that only
-fetches on demand (no prefetching, which the harness doesn't allow anyway) must make
-exactly one upstream call the first time each name is ever asked for, plus one more
-call every time a later request for that name arrives after its previous record's TTL
-has expired — there is no way to serve that request without either violating the TTL
-(stale) or asking upstream again. `YourCache` already refreshes at exactly that
-boundary (`now >= expires_at`, not before, not after), so it cannot go lower without
-either predicting the future or breaking correctness.
-
-The record the baseline mishandles worst is `www.microsoft.com`: it has both the
-shortest real TTL (20s) and the highest Zipf query weight (most popular name in the
-fixture), so the fixed-60s policy racks up the most stale hits on exactly the name that
-is queried most often *and* changes fastest.
+가장 타격이 큰 레코드는 `www.microsoft.com` — TTL이 제일 짧은데(20초) 동시에 제일 자주 조회되는 이름이라, 고정-60초 정책이 여기서 stale을 제일 많이 만든다.
