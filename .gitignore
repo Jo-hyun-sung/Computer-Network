@@ -2,9 +2,8 @@ __pycache__/
 *.pyc
 .DS_Store
 
-# only w03-dns is tracked for this repo
+# w03-dns and w04-tcp are tracked for this repo
 /w02-agent/
-/w04-tcp/
 /w05-ip-nat/
 /w06-routing/
 /w07-ethernet-arp/
