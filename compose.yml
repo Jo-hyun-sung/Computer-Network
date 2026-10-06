@@ -12,21 +12,21 @@ services:
   # docker compose --profile routing up -d
   r1:
     profiles: ["routing"]
-    image: frrouting/frr:v9.1.0
+    image: frrouting/frr:v8.4.1
     privileged: true
     volumes:
       - ./w06-routing/topology/r1:/etc/frr
     networks: [net_a, net_b]
   r2:
     profiles: ["routing"]
-    image: frrouting/frr:v9.1.0
+    image: frrouting/frr:v8.4.1
     privileged: true
     volumes:
       - ./w06-routing/topology/r2:/etc/frr
     networks: [net_b, net_c]
   r3:
     profiles: ["routing"]
-    image: frrouting/frr:v9.1.0
+    image: frrouting/frr:v8.4.1
     privileged: true
     volumes:
       - ./w06-routing/topology/r3:/etc/frr

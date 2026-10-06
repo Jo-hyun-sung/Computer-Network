@@ -1,0 +1,81 @@
+# Part C: r1 eth0 ospf cost 10 -> 100, no link down
+
+## before
+===== r1 =====
+Codes: K - kernel route, C - connected, S - static, R - RIP,
+       O - OSPF, I - IS-IS, B - BGP, E - EIGRP, N - NHRP,
+       T - Table, v - VNC, V - VNC-Direct, A - Babel, F - PBR,
+       f - OpenFabric,
+       > - selected route, * - FIB route, q - queued, r - rejected, b - backup
+       t - trapped, o - offload failure
+
+O   172.19.0.0/16 [110/10] is directly connected, eth1, weight 1, 00:00:42
+O>* 172.20.0.0/16 [110/20] via 172.19.0.3, eth1, weight 1, 00:00:42
+  *                        via 172.21.0.2, eth0, weight 1, 00:00:42
+O   172.21.0.0/16 [110/10] is directly connected, eth0, weight 1, 00:01:48
+
+===== r2 =====
+Codes: K - kernel route, C - connected, S - static, R - RIP,
+       O - OSPF, I - IS-IS, B - BGP, E - EIGRP, N - NHRP,
+       T - Table, v - VNC, V - VNC-Direct, A - Babel, F - PBR,
+       f - OpenFabric,
+       > - selected route, * - FIB route, q - queued, r - rejected, b - backup
+       t - trapped, o - offload failure
+
+O   172.19.0.0/16 [110/10] is directly connected, eth0, weight 1, 00:02:32
+O   172.20.0.0/16 [110/10] is directly connected, eth1, weight 1, 00:01:43
+O>* 172.21.0.0/16 [110/20] via 172.19.0.2, eth0, weight 1, 00:00:33
+  *                        via 172.20.0.2, eth1, weight 1, 00:00:33
+
+===== r3 =====
+Codes: K - kernel route, C - connected, S - static, R - RIP,
+       O - OSPF, I - IS-IS, B - BGP, E - EIGRP, N - NHRP,
+       T - Table, v - VNC, V - VNC-Direct, A - Babel, F - PBR,
+       f - OpenFabric,
+       > - selected route, * - FIB route, q - queued, r - rejected, b - backup
+       t - trapped, o - offload failure
+
+O>* 172.19.0.0/16 [110/20] via 172.20.0.3, eth1, weight 1, 00:00:48
+  *                        via 172.21.0.3, eth0, weight 1, 00:00:48
+O   172.20.0.0/16 [110/10] is directly connected, eth1, weight 1, 00:02:33
+O   172.21.0.0/16 [110/10] is directly connected, eth0, weight 1, 00:02:33
+
+
+## after (r1 now reaches 172.21.0.0/16 around via eth1 at cost 30)
+===== r1 =====
+Codes: K - kernel route, C - connected, S - static, R - RIP,
+       O - OSPF, I - IS-IS, B - BGP, E - EIGRP, N - NHRP,
+       T - Table, v - VNC, V - VNC-Direct, A - Babel, F - PBR,
+       f - OpenFabric,
+       > - selected route, * - FIB route, q - queued, r - rejected, b - backup
+       t - trapped, o - offload failure
+
+O   172.19.0.0/16 [110/10] is directly connected, eth1, weight 1, 00:00:55
+O>* 172.20.0.0/16 [110/20] via 172.19.0.3, eth1, weight 1, 00:00:12
+O   172.21.0.0/16 [110/30] via 172.19.0.3, eth1, weight 1, 00:00:12
+
+===== r2 =====
+Codes: K - kernel route, C - connected, S - static, R - RIP,
+       O - OSPF, I - IS-IS, B - BGP, E - EIGRP, N - NHRP,
+       T - Table, v - VNC, V - VNC-Direct, A - Babel, F - PBR,
+       f - OpenFabric,
+       > - selected route, * - FIB route, q - queued, r - rejected, b - backup
+       t - trapped, o - offload failure
+
+O   172.19.0.0/16 [110/10] is directly connected, eth0, weight 1, 00:02:45
+O   172.20.0.0/16 [110/10] is directly connected, eth1, weight 1, 00:01:56
+O>* 172.21.0.0/16 [110/20] via 172.20.0.2, eth1, weight 1, 00:00:12
+
+===== r3 =====
+Codes: K - kernel route, C - connected, S - static, R - RIP,
+       O - OSPF, I - IS-IS, B - BGP, E - EIGRP, N - NHRP,
+       T - Table, v - VNC, V - VNC-Direct, A - Babel, F - PBR,
+       f - OpenFabric,
+       > - selected route, * - FIB route, q - queued, r - rejected, b - backup
+       t - trapped, o - offload failure
+
+O>* 172.19.0.0/16 [110/20] via 172.20.0.3, eth1, weight 1, 00:01:02
+  *                        via 172.21.0.3, eth0, weight 1, 00:01:02
+O   172.20.0.0/16 [110/10] is directly connected, eth1, weight 1, 00:02:47
+O   172.21.0.0/16 [110/10] is directly connected, eth0, weight 1, 00:02:47
+

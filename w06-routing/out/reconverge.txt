@@ -1,0 +1,11 @@
+OSPF reconvergence, three FRR routers (v8.4.1) in a triangle, hello 10 s / dead 40 s (defaults, not overridden in frr.conf)
+Measured from the host: command start -> last change in any router's `show ip route ospf`
+(uptime counters removed from the comparison; polling all 3 routers takes ~1 s, so +/- 1 s)
+
+B4  cut  r1-r2 link   (ip link set eth1 down on r1)       1.2 s   r1, r2 and r3 all changed in the same poll
+B5  restore the link  (ip link set eth1 up)               16.2 s  r1/r3 at ~1 s, r2 only at 16.2 s
+C3  cost change       (r1 eth0: ip ospf cost 10 -> 100)   1.1 s   no link down; r1 and r2 changed, r3 unchanged
+    silent failure    (iptables drops OSPF on r1 eth1)    38.6 s  link stays "up"; first change at 34.4 s, r1 finishes at 38.6 s
+
+The first three rows are the three required measurements. The fourth is my own extra, to show what the
+dead interval (40 s) is for when nothing tells the router the link is gone.

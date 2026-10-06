@@ -1,0 +1,37 @@
+# show ip route ospf after `ip link set eth1 down` on r1 (r1-r2 cut), once the tables stopped changing
+===== r1 =====
+Codes: K - kernel route, C - connected, S - static, R - RIP,
+       O - OSPF, I - IS-IS, B - BGP, E - EIGRP, N - NHRP,
+       T - Table, v - VNC, V - VNC-Direct, A - Babel, F - PBR,
+       f - OpenFabric,
+       > - selected route, * - FIB route, q - queued, r - rejected, b - backup
+       t - trapped, o - offload failure
+
+O>* 172.19.0.0/16 [110/30] via 172.21.0.2, eth0, weight 1, 00:00:13
+O>* 172.20.0.0/16 [110/20] via 172.21.0.2, eth0, weight 1, 00:00:13
+O   172.21.0.0/16 [110/10] is directly connected, eth0, weight 1, 00:00:49
+
+===== r2 =====
+Codes: K - kernel route, C - connected, S - static, R - RIP,
+       O - OSPF, I - IS-IS, B - BGP, E - EIGRP, N - NHRP,
+       T - Table, v - VNC, V - VNC-Direct, A - Babel, F - PBR,
+       f - OpenFabric,
+       > - selected route, * - FIB route, q - queued, r - rejected, b - backup
+       t - trapped, o - offload failure
+
+O   172.19.0.0/16 [110/10] is directly connected, eth0, weight 1, 00:01:34
+O   172.20.0.0/16 [110/10] is directly connected, eth1, weight 1, 00:00:45
+O>* 172.21.0.0/16 [110/20] via 172.20.0.2, eth1, weight 1, 00:00:14
+
+===== r3 =====
+Codes: K - kernel route, C - connected, S - static, R - RIP,
+       O - OSPF, I - IS-IS, B - BGP, E - EIGRP, N - NHRP,
+       T - Table, v - VNC, V - VNC-Direct, A - Babel, F - PBR,
+       f - OpenFabric,
+       > - selected route, * - FIB route, q - queued, r - rejected, b - backup
+       t - trapped, o - offload failure
+
+O>* 172.19.0.0/16 [110/20] via 172.20.0.3, eth1, weight 1, 00:00:14
+O   172.20.0.0/16 [110/10] is directly connected, eth1, weight 1, 00:01:35
+O   172.21.0.0/16 [110/10] is directly connected, eth0, weight 1, 00:01:35
+
