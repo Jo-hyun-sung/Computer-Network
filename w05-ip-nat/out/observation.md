@@ -15,10 +15,10 @@ silently ignored rather than overwriting.
 ## Task 2 — Where Exactly Are You
 
 At least one NAT on both networks I measured: KU wifi's private address
-(`172.16.5.58`, RFC 1918) differs from its public address (`163.152.233.5`,
+(`172.16.14.99`, RFC 1918) differs from its public address (`163.152.233.14`,
 a KU-owned block, not `100.64.0.0/10`), so one ordinary NAT at the campus
-border. The phone hotspot showed the same pattern (`10.148.24.229` private
-vs. `118.235.24.23` public) — plus a possible second NAT layer between the
+border. The phone hotspot showed the same pattern (`10.233.245.229` private
+vs. `118.235.95.85` public) — plus a possible second NAT layer between the
 phone and its carrier, which the laptop can't see directly. Between the two
 networks, both the private address and the public address changed and
 nothing stayed the same except the laptop's own MAC — different physical
