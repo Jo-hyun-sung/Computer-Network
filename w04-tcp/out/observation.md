@@ -1,30 +1,30 @@
-# w04-tcp 관찰
+# w04-tcp observations
 
-## Task 1 — 신뢰적 전송
-- **Selective Repeat**(윈도우 8, 패킷마다 타이머 40 step)로 만들었다. stop-and-wait는 패킷 하나 보내고 왕복을 기다려야 해서 250패킷을 옮기기엔 너무 느릴 것 같았고, Go-Back-N은 하나 잃어버리면 윈도우 전체를 다시 보내서 낭비가 커 보였다.
-- 수신자는 중복이든 아니든 **데이터 패킷을 받을 때마다 ACK**를 보낸다. ACK가 한 번 사라질 수 있는데 중복 패킷에 답을 안 하면 송신자가 계속 재전송만 하게 되기 때문이다. 이미 받은 seq는 버리고, 순서가 뒤바뀐 패킷은 버퍼에 뒀다가 차례가 오면 이어 붙인다.
-- 채널이 실제로 나른 패킷은 seed 246 기준 **326개**(손실 42, 중복 13)였다. 최소 필요량은 250개라서 신뢰성 때문에 **약 1.3배**를 더 쓴 셈이다. seed 999(299개), seed 7(305개)도 SHA-256이 그대로 일치했다.
-- **뭐가 제일 먼저 깨졌나** 수신자를 일부러 허술하게 만들어서(중복 제거와 재정렬 버퍼 없이 오는 대로 이어 붙이기) 결함을 하나씩만 켜 봤다. 손실만 켜도 깨졌다(2,280B 도착): 타임아웃으로 재전송한 패킷이 원본과 같이 도착해서 데이터가 늘어난 것이다. 중복만 켜도 깨졌다(2,048B). 재정렬만 켰을 땐 우연히 멀쩡했는데, 송신자가 한 스텝에 하나씩만 보내서 선로에 패킷이 거의 안 쌓이기 때문이라 재정렬이 안전하다는 뜻은 아니다. 결국 **손실과 중복이 먼저 깨뜨렸고**, 손실은 재전송을 낳아서 결국 중복 문제로 이어진다.
-- 또 하나, 수신자가 이미 받은 패킷에는 ACK를 안 보내게 바꿔 봤더니 손실이 있는 채널에서 **끝나지 않았다**(20만 스텝을 다 쓰고도 손실만 켠 경우 168B, 세 결함을 다 켠 경우 88B만 도착). ACK가 한 번 사라지면 송신자는 계속 재전송하는데 수신자는 조용히 버려서 영영 안 끝나는 것이다. 중복 데이터에도 ACK를 돌려줘야 하는 이유다.
+## Task 1 — Reliable delivery
+- I built **Selective Repeat** (window 8, one 40-step timer per packet). Stop-and-wait has to wait a full round trip after every packet, which looked far too slow for 250 packets, and Go-Back-N resends the whole window when one packet is lost, which looked wasteful.
+- The receiver sends an **ACK for every data packet it receives**, duplicate or not. An ACK can get lost, and if the receiver stayed silent on a duplicate the sender would just keep retransmitting forever. Already-received sequence numbers are dropped, and out-of-order packets are buffered until their turn comes.
+- For seed 246 the channel actually carried **326 packets** (42 lost, 13 duplicated). The minimum needed is 250, so reliability cost about **1.3x** more. Seed 999 (299 packets) and seed 7 (305 packets) also gave a matching SHA-256.
+- **What broke first.** I built a deliberately sloppy receiver (no duplicate removal, no reorder buffer, just append whatever arrives) and turned on one fault at a time. Loss alone broke it (2,280 B arrived): the packet retransmitted after a timeout arrived together with the original, so the data grew. Duplication alone also broke it (2,048 B). Reordering alone happened to work, but only because the sender emits one packet per step, so almost nothing queues on the wire — that does not mean reordering is safe. So **loss and duplication broke it first**, and loss leads to retransmissions, which end up as the duplication problem anyway.
+- One more experiment: I made the receiver stay silent for packets it had already received, and on a lossy channel the transfer **never finished** (it used all 200,000 steps and only 168 B arrived with loss alone, 88 B with all three faults on). Once an ACK is lost the sender keeps retransmitting while the receiver silently discards, so it never ends. That is why duplicate data must still be ACKed.
 
-## Task 2 — 내 링크 재 보기
-- 첫 번째 망은 학교가 아니라 **집 Wi-Fi**(IP 192.168.219.x), 두 번째는 **폰 테더링**(IP 10.148.x.x)이다. 대상은 speed.cloudflare.com에서 5MB, 각 5번씩.
+## Task 2 — Looking at my own link
+- The first network is **home Wi-Fi** (IP 192.168.219.x), not campus; the second is **phone tethering** (IP 10.148.x.x). The target was a 5 MB download from speed.cloudflare.com, five runs each.
 
-| 망 | 처리량 median | 최소~최대 | 핸드셰이크 median |
+| Network | Throughput median | Min ~ max | Handshake median |
 |---|---|---|---|
 | home wifi | 147.1 Mbps | 82.8 ~ 151.8 | 13.2 ms |
 | tethering | 65.6 Mbps | 54.1 ~ 75.9 | 26.4 ms |
 
-- **A2** 캡처는 Cloudflare(162.159.140.220) 연결만 남겼다. 첫 연결(포트 54700)은 SYN이 프레임 1, SYN-ACK이 2, ACK가 3번이다(원본 전체 캡처에서는 SYN이 1438번).
-- **A3** ISN은 내 쪽 742180953, 서버 쪽 1667337137이다. 둘 다 0이 아니고 서로도 다르다. 0에서 시작하면 예전 연결에서 늦게 도착한 패킷이랑 헷갈리기 쉽고 예측도 쉬워서, 일부러 예측하기 어려운 값에서 시작하는 것 같다.
-- **A4** SYN 옵션은 내 쪽이 MSS 1460, window scale 8, SACK permitted다. 서버는 MSS 1400, window scale 13으로 답했다. 그래서 실제 세그먼트는 작은 쪽인 1400에 맞춰진다.
-- **A5** 내가 알려 준 윈도우는 65,280B에서 시작해 최대 약 **2MB**(2,096,896B)까지 커졌는데, 실제로 날아가고 있던 양(bytes in flight)은 최대 **약 1MB**(987,000B)였다. 받는 쪽 윈도우가 막은 게 아니라 보내는 쪽 혼잡 윈도우(슬로 스타트)가 한계였다는 뜻이다.
-- **B4 편차** home wifi는 첫 번째만 82.8 Mbps에 TTFB가 240ms로 튀고, 나머지 네 번은 147~152 Mbps에 TTFB가 55~60ms 정도였다. 첫 번째는 DNS나 경로가 처음이라 그런 것 같은데 확인은 못 했다. 그 밖에 무선 구간 경쟁이나 다른 프로그램 트래픽(캡처에 유튜브도 섞여 있었다)이 매번 달라서 값이 조금씩 흔들린다. 테더링은 신호 상태 때문에 54~76 Mbps로 더 많이 흔들렸다.
-- **B5** 핸드셰이크 시간은 거의 RTT 하나다. 5MB는 짧은 전송이라 대부분이 슬로 스타트인데, 윈도우가 RTT마다 두 배가 되니까 **RTT가 2배면 같은 크기까지 커지는 데도 2배가 걸린다.** 길게 보내도 처리량은 대략 윈도우÷RTT라서 RTT가 길면 불리하다. 이번에 테더링은 핸드셰이크가 약 2배(26.4 vs 13.2 ms)였고 처리량은 약 0.45배(65.6 vs 147.1 Mbps)였다. 다만 테더링은 회선 자체도 다르니까 RTT 하나만으로 다 설명되는 건 아니다.
+- **A2** I kept only the Cloudflare (162.159.140.220) connections in the capture. For the first connection (port 54700) the SYN is frame 1, SYN-ACK is frame 2 and ACK is frame 3 (in the original full capture the SYN was frame 1438).
+- **A3** The initial sequence numbers are 742180953 on my side and 1667337137 on the server's. Neither is 0 and they differ from each other. Starting at 0 would make it easy to confuse a late packet from an earlier connection with the new one, and easy to predict, so the ends seem to choose hard-to-predict values on purpose.
+- **A4** My SYN options were MSS 1460, window scale 8 and SACK permitted. The server answered with MSS 1400 and window scale 13. So the real segment size follows the smaller one, 1400.
+- **A5** The window I advertised started at 65,280 B and grew to about **2 MB** (2,096,896 B), but the bytes actually in flight peaked at only about **1 MB** (987,000 B). The limit was not the receive window; it was the sender's congestion window (slow start).
+- **B4 spread.** On home wifi only the first run was off: 82.8 Mbps with a TTFB of 240 ms, while the other four ran at 147~152 Mbps with a TTFB around 55~60 ms. The first run was probably slower because DNS or the path was cold, but I could not confirm that. Beyond that, contention on the wireless link and other programs' traffic (the capture also had YouTube mixed in) change from run to run, so the numbers wobble a little. Tethering varied more, 54~76 Mbps, because of signal conditions.
+- **B5** The handshake time is almost exactly one RTT. A 5 MB transfer is short, so most of it is slow start, and the window doubles every RTT, so **twice the RTT means twice as long to grow to the same size.** Even on a long transfer, throughput is roughly window ÷ RTT, so a longer RTT hurts. Here tethering had about twice the handshake time (26.4 vs 13.2 ms) and about 0.45x the throughput (65.6 vs 147.1 Mbps). The tethering link itself also differs, so RTT alone does not explain everything.
 
-## Task 3 — 고정 윈도우 이기기
-- baseline은 goodput 986.8, 손실 37.4%, 평균 큐 8.8이고, 내 제어는 **goodput 955.2(baseline의 97%), 손실 0.5%, 평균 큐 4.4로 strong**이 나왔다.
-- **R5** baseline은 goodput만 보면 제일 높지만 큐를 계속 가득 채워 놓고(평균 8.8) 보낸 것의 37%를 버린다. 그 큐가 곧 지연이라 같은 링크를 쓰는 다른 흐름들이 다 같이 느려지고, 버려진 패킷은 링크 앞까지 갔다 헛수고가 된다. 혼자만 빠를 뿐 링크 전체로 보면 최악의 송신자다.
-- **어디로 수렴하나** 링크 파이프가 약 20패킷(RTT 20슬롯 × 슬롯당 1패킷)이고 큐가 10이라 30을 넘으면 손실이 난다. 내 윈도우는 슬로 스타트로 20까지 올라간 뒤 RTT마다 +1씩 커지다가, 손실이 나면 0.7배로 줄어서 **대략 22~31 사이**를 오간다. 평균 큐가 4.4니까 평균 윈도우는 24~25 정도다. 파이프를 꽉 채우고 큐는 조금만 쓰는 자리다.
-- **백오프를 완만하게 하면** 0.6배는 goodput 92%에 큐 3.8, 0.7배는 97%에 큐 4.4, 0.85배는 99%인데 큐가 6.7이라 **제한(5.0)을 넘어서 탈락**했다. 덜 줄일수록 goodput은 올라가지만, 그만큼 큐가 늘어서 다른 흐름이 더 기다려야 한다.
-- 손실은 타임아웃(60슬롯)으로만 알 수 있고 한 번 막히면 타임아웃이 우르르 나와서, 손실 뒤에는 윈도우 크기만큼 ACK가 올 때까지 추가 손실에는 반응하지 않게 했다.
+## Task 3 — Beating the fixed window
+- The baseline has goodput 986.8, loss 37.4% and an average queue of 8.8. My controller got **goodput 955.2 (97% of the baseline), loss 0.5% and an average queue of 4.4, which is strong**.
+- **R5** On goodput alone the baseline is the highest, but it keeps the queue permanently full (average 8.8) and throws away 37% of what it sends. That queue is delay, so every other flow on the same link slows down too, and the dropped packets travelled all the way to the link only to be wasted. It is fast only for itself; for the link as a whole it is the worst sender.
+- **What my window converges to.** The link pipe holds about 20 packets (RTT 20 slots × 1 packet per slot) and the queue holds 10, so loss starts above 30. My window climbs to 20 with slow start, then grows +1 per RTT, and on loss it is cut to 0.7x, so it oscillates **roughly between 22 and 31**. With an average queue of 4.4, the average window is about 24~25. That keeps the pipe full while using only a little queue.
+- **Gentler backoff.** A 0.6x cut gave goodput 92% with queue 3.8, 0.7x gave 97% with queue 4.4, and 0.85x gave 99% but a queue of 6.7, which **exceeds the limit (5.0) and fails**. The less I cut, the higher goodput goes, but the queue grows by the same amount and other flows have to wait longer.
+- Loss can only be detected by timeout (60 slots), and once the pipe jams the timeouts arrive all at once, so after a loss the controller ignores further losses until a window's worth of ACKs has come back.

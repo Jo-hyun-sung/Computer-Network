@@ -37,8 +37,8 @@ entries of that length — roughly the same total memory as the linear list
 plus dict overhead, no duplication of the routes themselves. R5: lookup time
 is now proportional to the number of *distinct prefix lengths present*
 (≤ 33), not to the number of routes (5,000) — each candidate length costs one
-O(1) dict lookup instead of a full table scan. Measured: baseline 417
-lookups/s vs. 1,309,552 lookups/s, a 3143.7x speedup, all 20,000 answers
+O(1) dict lookup instead of a full table scan. Measured: baseline 484
+lookups/s vs. 1,200,336 lookups/s, a 2480.2x speedup, all 20,000 answers
 identical to `LinearTable`. The bit-walk (binary trie) is what real hardware
 builds because its cost is bounded by the address width (32 steps, fixed)
 regardless of table size or language — a property a software hash table
