@@ -1,6 +1,7 @@
 __pycache__/
 *.pyc
 .DS_Store
+.serena/
 
 # w03-dns ~ w07-ethernet-arp are tracked for this repo
 /w02-agent/
