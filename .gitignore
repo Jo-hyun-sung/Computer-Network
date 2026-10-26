@@ -2,7 +2,6 @@ __pycache__/
 *.pyc
 .DS_Store
 
-# w03-dns, w04-tcp, w05-ip-nat and w06-routing are tracked for this repo
+# w03-dns ~ w07-ethernet-arp are tracked for this repo
 /w02-agent/
-/w07-ethernet-arp/
 /traces/
