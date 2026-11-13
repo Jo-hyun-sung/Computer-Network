@@ -1,0 +1,1 @@
+{"v":1,"type":"action","ts":1763357431.08,"action":"block","target":{"mac":"00:00:00:00:00:04","ip":"10.0.0.4","sw":"s1","port":4},"alert_id":"rule-000001","reason":"arp_spoof (arp_conflict)","expires_ts":1763357731.08,"ok":true,"install_ms":4.1}

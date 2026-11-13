@@ -1,0 +1,1 @@
+{"v":1,"type":"label","ts":1763357490.0,"attack_id":"a01","attack":"arp_spoof","start_ts":1763357430.0,"end_ts":1763357490.0,"attacker":{"mac":"00:00:00:00:00:04","ip":"10.0.0.4","sw":"s1","port":4},"target":{"mac":"00:00:00:00:00:01","ip":"10.0.0.1","sw":"s1","port":1},"evasive":false,"params":{"tool":"arpspoof","rate_pps":1,"spoofed_ip":"10.0.0.254"}}

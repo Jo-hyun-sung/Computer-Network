@@ -1,0 +1,62 @@
+{
+  "v": 1,
+  "run_id": "20261117-143000-arp_spoof",
+  "scenario": "arp_spoof",
+  "start_ts": 1763357400.0,
+  "end_ts": 1763357520.0,
+  "topology": "single switch s1, 5 hosts",
+  "hosts": [
+    {
+      "name": "h1",
+      "role": "client",
+      "mac": "00:00:00:00:00:01",
+      "ip": "10.0.0.1",
+      "sw": "s1",
+      "port": 1
+    },
+    {
+      "name": "h2",
+      "role": "client",
+      "mac": "00:00:00:00:00:02",
+      "ip": "10.0.0.2",
+      "sw": "s1",
+      "port": 2
+    },
+    {
+      "name": "h3",
+      "role": "client",
+      "mac": "00:00:00:00:00:03",
+      "ip": "10.0.0.3",
+      "sw": "s1",
+      "port": 3
+    },
+    {
+      "name": "h4",
+      "role": "attacker",
+      "mac": "00:00:00:00:00:04",
+      "ip": "10.0.0.4",
+      "sw": "s1",
+      "port": 4
+    },
+    {
+      "name": "gw",
+      "role": "gateway",
+      "mac": "00:00:00:00:00:fe",
+      "ip": "10.0.0.254",
+      "sw": "s1",
+      "port": 5
+    },
+    {
+      "name": "dhcp",
+      "role": "dhcp_server",
+      "mac": "00:00:00:00:00:fd",
+      "ip": "10.0.0.253",
+      "sw": "s1",
+      "port": 6
+    }
+  ],
+  "dhcp_servers": [
+    "00:00:00:00:00:fd"
+  ],
+  "notes": "예시 데이터 (손으로 만든 값)"
+}
