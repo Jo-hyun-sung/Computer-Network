@@ -68,8 +68,7 @@ python3 common/records.py check data/runs/<run_id>
 
 ## 알려진 한계 (다음 주 보완)
 
-- **정상 DNS 트래픽이 아직 캡처에 안 잡힘.** `nslookup`이 `dnsutils` 설치 전이라 질의가 안 나갔음.
-  11주차 "정상 트래픽 다양화" 작업에서 `dnsutils` 설치 후 재확인 예정. (ping·HTTP는 정상)
+- ✅ **정상 DNS 트래픽 캡처됨** (`dnsutils` 설치 후 확인, `*.lab.test` 질의·응답). ping·HTTP·DNS 혼합.
 - **MAC 플러딩 실제 전송 속도는 설정값보다 낮음**(scapy 파이썬 루프 한계, ~수백 pps).
   CAM 테이블을 실제로 넘치게 하려면 `tcpreplay`/`sendpfast`로 교체 가능하나,
   *탐지*에는 "짧은 시간 내 다수의 새 MAC"만으로 충분함.

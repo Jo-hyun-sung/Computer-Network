@@ -130,13 +130,21 @@ def write_meta(run_dir: Path, scn: Scenario, start_ts: float, end_ts: float) -> 
 
 
 def run_scenario(scn: Scenario, run_dir: Path, do_pcap: bool) -> None:
+    from functools import partial
+
     from mininet.net import Mininet
-    from mininet.node import OVSController, RemoteController
+    from mininet.node import OVSController, OVSSwitch, RemoteController
     from mininet.clean import cleanup
 
     cleanup()  # 이전 잔여물 정리
-    ctrl = {"ovs": OVSController, "remote": RemoteController}[CONTROLLER]
-    net = Mininet(topo=LanTopo(), controller=ctrl, autoSetMacs=False)
+    if CONTROLLER == "remote":
+        # OS-Ken(osken-manager)이 127.0.0.1:6653에서 대기 중이어야 함.
+        # OS-Ken 예제 앱은 OpenFlow 1.3을 쓰므로 스위치도 OF1.3으로 맞춤.
+        net = Mininet(topo=LanTopo(), controller=RemoteController,
+                      switch=partial(OVSSwitch, protocols="OpenFlow13"),
+                      autoSetMacs=False)
+    else:
+        net = Mininet(topo=LanTopo(), controller=OVSController, autoSetMacs=False)
     net.start()
 
     procs = []
@@ -144,8 +152,7 @@ def run_scenario(scn: Scenario, run_dir: Path, do_pcap: bool) -> None:
     run_start = time.time()
     try:
         configure_network(net, procs)
-        if CONTROLLER == "ovs":
-            net.waitConnected(timeout=10)
+        net.waitConnected(timeout=15)  # 컨트롤러(내장/OS-Ken)에 스위치가 붙을 때까지
 
         if do_pcap:
             cap = start_capture(net, run_dir / "capture.pcap")
