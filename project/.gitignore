@@ -1,2 +1,6 @@
 data/
 __pycache__/
+
+# P3 모델 산출물 (재생성 가능)
+model/rf.joblib
+model/metrics.json
