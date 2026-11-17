@@ -1,7 +1,7 @@
 # 프로젝트 주제 제출
 
 - **팀 이름:** TBD
-- **팀원:** TBD (팀장), TBD, TBD, TBD, TBD
+- **팀원:** 조현성 (팀장), 김욱, 최대환, 송정훈, 박상언
 - **프로젝트 제목:** AI 기반 LAN 공격 탐지 및 자동 대응 시스템
 - **GitHub 저장소:** https://github.com/Jo-hyun-sung/Computer-Network/tree/main/project
 
